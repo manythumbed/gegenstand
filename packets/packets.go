@@ -3,6 +3,7 @@ package packets
 import (
 	"bytes"
 	"errors"
+	"fmt"
 )
 
 type PacketIdentifier [2]byte
@@ -42,6 +43,37 @@ func WritePubRel(id PacketIdentifier) []byte {
 
 func WritePubComp(id PacketIdentifier) []byte {
 	return packetWithIdentifier(pubcomp, id)
+}
+
+func WriteUnsubscribe(id PacketIdentifier, topics ...string) ([]byte, error) {
+	if len(topics) == 0 {
+		return nil, errors.New("No topics have been provided for unsubscribe packet")
+	}
+
+	encodedTopics := bytes.Buffer{}
+	for _, t := range topics {
+		s, err := encode(t)
+		if err != nil {
+			return nil, errors.New("Topic is too long")
+		}
+
+		encodedTopics.Write(s)
+	}
+
+	l, err := remainingLength(encodedTopics.Len() + 2)
+	if err != nil {
+		return nil, errors.New("encoded topics are too long for unsubscribe packet")
+	}
+
+	fmt.Println(l)
+
+	packet := bytes.Buffer{}
+	packet.Write(fixedHeader(unsubscribe, 1<<1, l))
+	packet.WriteByte(id[0])
+	packet.WriteByte(id[1])
+	packet.Write(encodedTopics.Bytes())
+
+	return packet.Bytes(), nil
 }
 
 func WriteUnsubAck(id PacketIdentifier) []byte {
@@ -90,5 +122,20 @@ func remainingLength(length int) ([]byte, error) {
 		return nil, errors.New("Invalid remaining length")
 	}
 
-	return nil, nil
+	bytes := bytes.Buffer{}
+
+	for {
+		d := byte(length % 128)
+		length /= 128
+		if length > 0 {
+			d |= 0x80
+		}
+		bytes.WriteByte(d)
+
+		if length == 0 {
+			break
+		}
+	}
+
+	return bytes.Bytes(), nil
 }
