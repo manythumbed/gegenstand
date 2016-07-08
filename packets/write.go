@@ -3,7 +3,6 @@ package packets
 import (
 	"bytes"
 	"errors"
-	"fmt"
 )
 
 type PacketIdentifier [2]byte
@@ -29,6 +28,13 @@ const (
 	disconnect       = 14
 )
 
+const (
+	SubSuccessZero byte = 0x00
+	SubSuccessOne       = 0x01
+	SubSuccessTwo       = 0x02
+	SubFailure          = 0x80
+)
+
 func WritePubAck(id PacketIdentifier) []byte {
 	return packetWithIdentifier(puback, id)
 }
@@ -43,6 +49,25 @@ func WritePubRel(id PacketIdentifier) []byte {
 
 func WritePubComp(id PacketIdentifier) []byte {
 	return packetWithIdentifier(pubcomp, id)
+}
+
+func WriteSubAck(id PacketIdentifier, codes ...byte) ([]byte, error) {
+	if len(codes) == 0 {
+		return nil, errors.New("No return codes have been provided for suback packet")
+	}
+
+	l, err := remainingLength(len(codes) + 2)
+	if err != nil {
+		return nil, errors.New("Too many return codes")
+	}
+
+	packet := bytes.Buffer{}
+	packet.Write(fixedHeader(suback, 0, l))
+	packet.WriteByte(id[0])
+	packet.WriteByte(id[1])
+	packet.Write(codes)
+
+	return packet.Bytes(), nil
 }
 
 func WriteUnsubscribe(id PacketIdentifier, topics ...string) ([]byte, error) {
@@ -64,8 +89,6 @@ func WriteUnsubscribe(id PacketIdentifier, topics ...string) ([]byte, error) {
 	if err != nil {
 		return nil, errors.New("encoded topics are too long for unsubscribe packet")
 	}
-
-	fmt.Println(l)
 
 	packet := bytes.Buffer{}
 	packet.Write(fixedHeader(unsubscribe, 1<<1, l))
