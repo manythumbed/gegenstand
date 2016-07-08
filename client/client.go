@@ -1,13 +1,13 @@
 package client
 
 import (
+	"errors"
+	"github.com/manythumbed/gegenstand/packets"
 	"io"
 	"net"
-	"errors"
 )
 
 type Message interface {
-
 }
 
 type MessageHandler interface {
@@ -17,9 +17,9 @@ type MessageHandler interface {
 type Qos byte
 
 const (
-	AtMostOnce Qos = 0
-	AtLeastOnce = 1
-	ExactlyOnce = 2
+	AtMostOnce  Qos = 0
+	AtLeastOnce     = 1
+	ExactlyOnce     = 2
 )
 
 type Connection interface {
@@ -32,7 +32,7 @@ type Connection interface {
 
 type dummy struct {
 	connected bool
-	conn net.Conn
+	conn      net.Conn
 }
 
 func (d *dummy) Connect() error {
@@ -62,7 +62,7 @@ func (d *dummy) Disconnect() error {
 }
 
 func disconnect(w io.Writer) error {
-	_, err := w.Write([]byte{})
+	_, err := w.Write(packets.WriteDisconnect())
 
 	return err
 }
