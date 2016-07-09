@@ -22,11 +22,16 @@ const (
 	ExactlyOnce     = 2
 )
 
+type Subscription struct {
+	topic   string
+	quality Qos
+}
+
 type Connection interface {
 	Connect() error
 	Disconnect() error
 	Unsubscribe(topics ...string) error
-	Subscribe(handler MessageHandler, topics ...string) error
+	Subscribe(handler MessageHandler, topics ...Subscription) error
 	Publish(topic string, qos Qos, retained bool, payload []byte) error
 }
 
