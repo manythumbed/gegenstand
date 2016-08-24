@@ -3,6 +3,7 @@ package packets
 import (
 	"bytes"
 	"errors"
+	"github.com/manythumbed/gegenstand/protocol"
 )
 
 type PacketIdentifier [2]byte
@@ -49,6 +50,12 @@ func WritePubRel(id PacketIdentifier) []byte {
 
 func WritePubComp(id PacketIdentifier) []byte {
 	return packetWithIdentifier(pubcomp, id)
+}
+
+// TODO look at creating a common shared package for Subscription, Qos.
+func WriteSubscribe(id PacketIdentifier, topics ...protocol.Subscription) ([]byte, error) {
+
+	return nil, nil
 }
 
 func WriteSubAck(id PacketIdentifier, codes ...byte) ([]byte, error) {

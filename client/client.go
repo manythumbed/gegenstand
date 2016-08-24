@@ -3,6 +3,7 @@ package client
 import (
 	"errors"
 	"github.com/manythumbed/gegenstand/packets"
+	"github.com/manythumbed/gegenstand/protocol"
 	"io"
 	"net"
 )
@@ -14,25 +15,12 @@ type MessageHandler interface {
 	Handle(message Message)
 }
 
-type Qos byte
-
-const (
-	AtMostOnce  Qos = 0
-	AtLeastOnce     = 1
-	ExactlyOnce     = 2
-)
-
-type Subscription struct {
-	topic   string
-	quality Qos
-}
-
 type Connection interface {
 	Connect() error
 	Disconnect() error
 	Unsubscribe(topics ...string) error
-	Subscribe(handler MessageHandler, topics ...Subscription) error
-	Publish(topic string, qos Qos, retained bool, payload []byte) error
+	Subscribe(handler MessageHandler, topics ...protocol.Subscription) error
+	Publish(topic string, qos protocol.Qos, retained bool, payload []byte) error
 }
 
 type dummy struct {
